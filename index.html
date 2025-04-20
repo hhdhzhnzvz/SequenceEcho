@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Master | BrainSpark</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600&display=swap');
+
+        :root {
+            --cream: #FFF9F0;
+            --beige: #F5E6D8;
+            --light-brown: #E8D5C0;
+            --gold: #D4AF37;
+            --coffee: #A68A64;
+            --text: #3A3226;
+            --shadow: rgba(58, 50, 38, 0.1);
+            --card-bg: rgba(255, 249, 240, 0.85);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--cream);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Элегантный фон с пузырями */
+        .bubbles-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, var(--beige), var(--cream));
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.08);
+            backdrop-filter: blur(2px);
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+        }
+
+        /* Основные стили */
+        header {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            background: linear-gradient(to bottom, var(--cream), transparent);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .game-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--coffee);
+            margin-bottom: 0.3rem;
+        }
+
+        .game-subtitle {
+            font-size: 0.9rem;
+            color: var(--coffee);
+            font-weight: 400;
+        }
+
+        .game-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            background: linear-gradient(to right, var(--gold), var(--coffee));
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+            font-size: 0.9rem;
+            flex: 1;
+            text-align: center;
+            max-width: 150px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stat {
+            background: rgba(166, 138, 100, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat i {
+            color: var(--gold);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.6rem;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+
+        .card {
+            aspect-ratio: 3/4;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-front {
+            background: var(--cream);
+            transform: rotateY(180deg);
+            font-size: 1.8rem;
+            color: var(--coffee);
+            font-weight: 600;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, var(--gold), var(--coffee));
+            transform: rotateY(0deg);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched .card-front {
+            background: rgba(139, 195, 74, 0.3);
+        }
+
+        .game-description {
+            padding: 1.5rem;
+            background: var(--card-bg);
+            margin-top: auto;
+            width: 100%;
+            border-top: 1px solid var(--light-brown);
+        }
+
+        .game-description h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--coffee);
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .game-description p {
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .game-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(58, 50, 38, 0.2);
+            text-align: center;
+            z-index: 100;
+            max-width: 90%;
+            width: 300px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .game-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .game-message h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--coffee);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .game-message p {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Анимации */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 400px) {
+            .cards-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .card-front {
+                font-size: 1.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                max-width: 100%;
+                width: 200px;
+            }
+            
+            .game-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .cards-grid {
+                max-width: 500px;
+                gap: 0.8rem;
+            }
+            
+            .card-front {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Фон с пузырями -->
+    <div class="bubbles-bg" id="bubblesBg"></div>
+
+    <header>
+        <h1 class="game-title">Card Master</h1>
+        <div class="game-subtitle">Тренировка памяти и внимания</div>
+    </header>
+
+    <div class="game-area">
+        <div class="controls">
+            <button class="btn" id="startBtn">Новая игра</button>
+            <button class="btn" id="restartBtn">Сбросить</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <i class="fas fa-clock"></i>
+                <span id="timeDisplay">00:00</span>
+            </div>
+            <div class="stat">
+                <i class="fas fa-star"></i>
+                <span id="movesDisplay">0 ходов</span>
+            </div>
+            <div class="stat">
+                <i class="fas fa-layer-group"></i>
+                <span id="pairsDisplay">0 пар</span>
+            </div>
+        </div>
+
+        <div class="cards-grid" id="cardsGrid"></div>
+    </div>
+
+    <div class="game-description">
+        <h3>Как играть в Card Master?</h3>
+        <p>Сначала вам покажут все карты на 3 секунды, чтобы вы могли их запомнить. Затем карты перевернутся, и вам нужно будет находить пары, открывая по две карты за ход.</p>
+        <p><strong>Применение в жизни:</strong> Развивает ассоциативную память, полезную для изучения языков и запоминания информации.</p>
+    </div>
+
+    <div class="game-message" id="messageBox">
+        <h3 id="messageTitle">Поздравляем!</h3>
+        <p id="messageText">Вы нашли все пары!</p>
+        <button class="btn pulse" id="messageBtn">Играть снова</button>
+    </div>
+
+    <script>
+        // Игровая логика
+        const gameState = {
+            cards: [],
+            flippedCards: [],
+            matchedPairs: 0,
+            moves: 0,
+            time: 0,
+            timer: null,
+            isPlaying: false,
+            memorizationTime: 3000, // 3 секунды на запоминание
+            themes: [
+                ['🍎', '🍌', '🍒', '🍓', '🍊', '🍋', '🍐', '🍉'],
+                ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'],
+                ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎱', '🏓'],
+                ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎', '🚓', '🚑']
+            ],
+            currentTheme: 0
+        };
+
+        // Элементы DOM
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const movesDisplay = document.getElementById('movesDisplay');
+        const pairsDisplay = document.getElementById('pairsDisplay');
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const messageBtn = document.getElementById('messageBtn');
+
+        // Создаем пузыри на фоне
+        function createBubbles() {
+            const bubblesBg = document.getElementById('bubblesBg');
+            const bubbleCount = window.innerWidth < 768 ? 20 : 40;
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                
+                const size = Math.random() * 60 + 20;
+                const posX = Math.random() * 100;
+                const delay = Math.random() * 15;
+                const duration = Math.random() * 15 + 10;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${posX}%`;
+                bubble.style.bottom = `-${size}px`;
+                bubble.style.animationDelay = `${delay}s`;
+                bubble.style.animationDuration = `${duration}s`;
+                
+                bubblesBg.appendChild(bubble);
+            }
+        }
+
+        // Инициализация игры
+        function initGame() {
+            gameState.cards = [];
+            gameState.flippedCards = [];
+            gameState.matchedPairs = 0;
+            gameState.moves = 0;
+            gameState.time = 0;
+            gameState.isPlaying = false;
+            
+            clearInterval(gameState.timer);
+            
+            updateStats();
+            generateCards();
+        }
+
+        // Генерация карт
+        function generateCards() {
+            cardsGrid.innerHTML = '';
+            
+            // Выбираем текущую тему
+            const theme = gameState.themes[gameState.currentTheme];
+            const pairs = theme.slice(0, 8); // Берем 8 символов для 16 карт (8 пар)
+            
+            // Создаем пары карт
+            gameState.cards = [...pairs, ...pairs];
+            
+            // Перемешиваем карты
+            shuffleCards();
+            
+            // Создаем DOM-элементы карт
+            gameState.cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.dataset.index = index;
+                cardElement.dataset.value = card;
+                
+                const front = document.createElement('div');
+                front.classList.add('card-face', 'card-front');
+                front.textContent = card;
+                
+                const back = document.createElement('div');
+                back.classList.add('card-face', 'card-back');
+                
+                cardElement.appendChild(front);
+                cardElement.appendChild(back);
+                
+                cardElement.addEventListener('click', () => flipCard(index));
+                
+                cardsGrid.appendChild(cardElement);
+            });
+            
+            // Показываем все карты для запоминания
+            showAllCards();
+        }
+
+        // Показать все карты для запоминания
+        function showAllCards() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.classList.add('flipped');
+            });
+            
+            // Через заданное время переворачиваем карты обратно
+            setTimeout(() => {
+                cards.forEach(card => {
+                    card.classList.remove('flipped');
+                });
+                startGameTimer();
+            }, gameState.memorizationTime);
+        }
+
+        // Перемешивание карт
+        function shuffleCards() {
+            for (let i = gameState.cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gameState.cards[i], gameState.cards[j]] = [gameState.cards[j], gameState.cards[i]];
+            }
+        }
+
+        // Переворот карты
+        function flipCard(index) {
+            const card = document.querySelector(`.card[data-index="${index}"]`);
+            
+            // Не переворачиваем уже открытые или совпавшие карты
+            if (card.classList.contains('flipped') || card.classList.contains('matched')) {
+                return;
+            }
+            
+            // Если уже две карты перевернуты, не делаем ничего
+            if (gameState.flippedCards.length >= 2) {
+                return;
+            }
+            
+            // Переворачиваем карту
+            card.classList.add('flipped');
+            gameState.flippedCards.push(index);
+            
+            // Если перевернуто две карты - проверяем на совпадение
+            if (gameState.flippedCards.length === 2) {
+                gameState.moves++;
+                updateStats();
+                checkForMatch();
+            }
+        }
+
+        // Проверка на совпадение карт
+        function checkForMatch() {
+            const [firstIndex, secondIndex] = gameState.flippedCards;
+            const firstCard = document.querySelector(`.card[data-index="${firstIndex}"]`);
+            const secondCard = document.querySelector(`.card[data-index="${secondIndex}"]`);
+            
+            if (firstCard.dataset.value === secondCard.dataset.value) {
+                // Совпадение
+                firstCard.classList.add('matched');
+                secondCard.classList.add('matched');
+                gameState.matchedPairs++;
+                gameState.flippedCards = [];
+                
+                // Проверяем, закончена ли игра
+                if (gameState.matchedPairs === 8) {
+                    endGame();
+                }
+            } else {
+                // Не совпали - переворачиваем обратно через 1 секунду
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    gameState.flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        // Запуск таймера игры
+        function startGameTimer() {
+            gameState.isPlaying = true;
+            clearInterval(gameState.timer);
+            
+            gameState.timer = setInterval(() => {
+                gameState.time++;
+                updateStats();
+            }, 1000);
+        }
+
+        // Обновление статистики
+        function updateStats() {
+            const minutes = Math.floor(gameState.time / 60).toString().padStart(2, '0');
+            const seconds = (gameState.time % 60).toString().padStart(2, '0');
+            
+            timeDisplay.textContent = `${minutes}:${seconds}`;
+            movesDisplay.textContent = `${gameState.moves} ходов`;
+            pairsDisplay.textContent = `${gameState.matchedPairs} пар`;
+        }
+
+        // Завершение игры
+        function endGame() {
+            clearInterval(gameState.timer);
+            
+            const minutes = Math.floor(gameState.time / 60);
+            const seconds = gameState.time % 60;
+            
+            let timeText;
+            if (minutes > 0) {
+                timeText = `${minutes} мин ${seconds} сек`;
+            } else {
+                timeText = `${seconds} сек`;
+            }
+            
+            showMessage(
+                'Поздравляем!',
+                `Вы нашли все пары за ${timeText} и ${gameState.moves} ходов!`,
+                'Играть снова'
+            );
+            
+            // Меняем тему для следующей игры
+            gameState.currentTheme = (gameState.currentTheme + 1) % gameState.themes.length;
+        }
+
+        // Показать сообщение
+        function showMessage(title, text, btnText) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageBtn.textContent = btnText;
+            messageBox.classList.add('show');
+        }
+
+        // Скрыть сообщение
+        function hideMessage() {
+            messageBox.classList.remove('show');
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            createBubbles();
+            initGame();
+            
+            // Обработчики событий
+            startBtn.addEventListener('click', initGame);
+            restartBtn.addEventListener('click', initGame);
+            messageBtn.addEventListener('click', function() {
+                hideMessage();
+                initGame();
+            });
+        });
+
+        // Адаптация к изменению размера экрана
+        window.addEventListener('resize', function() {
+            document.querySelectorAll('.bubble').forEach(bubble => bubble.remove());
+            createBubbles();
+        });
+    </script>
+</body>
+</html>
